@@ -1,0 +1,86 @@
+name: 'Test Rust codebases'
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  RUST_VERSION: 1.73.0
+  NIGHTLY_VERSION: nightly-2023-08-03
+  SCCACHE_GHA_ENABLED: "true"
+  RUSTC_WRAPPER: "sccache"
+on: 
+  push:
+    branches:
+      - main
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+  paths:
+    - "trusted-setup/crates/**"
+
+jobs:
+  get-affected-crates:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.create-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Check for crate changes
+        run: |
+          echo "diff_crates=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^trusted-setup/crates/' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
+      - name: Get affected crates
+        id: create-matrix
+        if: env.diff_crates != ''
+        run: |
+          crates=(${{ env.diff_crates }})
+          # Format crates array as json
+          json_array=$(printf "{\"crate\":\"%s\"}," "${crates[@]}")
+          json_array="[${json_array%,}]"
+          # Create matrix
+          echo "::set-output name=matrix::$json_array"
+          
+  lint:
+    needs: get-affected-crates
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.get-affected-crates.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+            profile: minimal
+            toolchain: ${{ env.NIGHTLY_VERSION }}
+            override: true
+            components: rustfmt, clippy      
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
+      - name: Format Crates
+        uses: ./.github/actions/check-formatting
+        with:
+          crate-path: trusted-setup/crates/${{ matrix.crate }}
+
+  test:
+    needs: get-affected-crates
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.get-affected-crates.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+            profile: minimal
+            toolchain: ${{ env.NIGHTLY_VERSION }}
+            override: true
+      - name: Run sccache-cache
+        uses: mozilla-actions/sccache-action@v0.0.3
+      - name: Test Crates
+        uses: ./.github/actions/test
+        with:
+          crate-path: trusted-setup/crates/${{ matrix.crate }}

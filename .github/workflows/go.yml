@@ -1,0 +1,46 @@
+name: 'Build and test Go codebase'
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '**.go'
+      - 'go.mod'
+      - 'go.sum'
+
+jobs:
+  build_and_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Build
+        run: |
+          for d in */** ; do
+            if [ -e "${d}/go.mod" ]; then
+              echo "Building project in directory $d"
+              go build -C "${d}" -v ./...
+            fi
+          done
+
+      - name: Test
+        run: |
+          for d in */** ; do
+            if [ -e "${d}/go.mod" ]; then
+              echo "Testing project in directory $d"
+              go test -C "${d}" -v ./...
+            fi
+          done
