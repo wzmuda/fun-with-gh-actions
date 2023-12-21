@@ -1,0 +1,23 @@
+name: "Test Crate"
+description: "Test Crate..."
+inputs:
+  crate-path:
+    description: 'The path to the crate'
+    required: true
+
+runs:
+  using: "composite"
+  steps: 
+    - name: Install cargo-nextest
+      run: cargo install cargo-nextest
+    - name: Build tests
+      run: |
+        cargo --locked nextest run --no-run
+        cargo test --locked --doc -- --help
+      working-directory: ${{ inputs.crate-path }}
+    - name: Run tests
+      run: |
+        cargo --locked nextest run --nocapture
+        cargo test --locked --doc -- --nocapture
+      working-directory: ${{ inputs.crate-path }}
+

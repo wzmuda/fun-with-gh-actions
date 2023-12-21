@@ -1,0 +1,30 @@
+
+name: "Format Rust crate"
+description: "Format crate..."
+inputs:
+  crate-path:
+    description: 'The path to the crate'
+    required: true
+
+runs:
+  using: "composite"
+  steps: 
+    - name: Install cargo-sort
+      uses: actions-rs/install@v0.1
+      with:
+        crate: cargo-sort
+        version: latest
+    - name: Check formatting
+      uses: actions-rs/cargo@v1
+      with:
+        command: fmt
+        args: --all -- --check
+      working-directory: ${{ inputs.crate-path }}
+    - name: Check Cargo.toml formatting
+      run: cargo sort --check --check-format
+      working-directory: ${{ inputs.crate-path }}
+    - uses: actions-rs/clippy-check@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        args: --locked --all-targets
+      working-directory: ${{ inputs.crate-path }}
