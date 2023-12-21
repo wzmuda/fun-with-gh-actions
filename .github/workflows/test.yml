@@ -9,6 +9,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - "trusted-setup/crates/**"
   pull_request:
     types:
       - opened
