@@ -15,8 +15,8 @@ on:
       - synchronize
       - reopened
       - ready_for_review
-  paths:
-    - "trusted-setup/crates/**"
+    paths:
+      - "trusted-setup/crates/**"
 
 jobs:
   get-affected-crates:
