@@ -9,16 +9,14 @@ on:
   push:
     branches:
       - main
-    paths:
-      - "trusted-setup/crates/**"
   pull_request:
     types:
       - opened
       - synchronize
       - reopened
       - ready_for_review
-    paths:
-      - "trusted-setup/crates/**"
+  paths:
+    - "trusted-setup/crates/**"
 
 jobs:
   get-affected-crates:
