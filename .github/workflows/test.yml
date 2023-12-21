@@ -5,7 +5,7 @@ env:
   NIGHTLY_VERSION: nightly-2023-08-03
   SCCACHE_GHA_ENABLED: "true"
   RUSTC_WRAPPER: "sccache"
-on: 
+on:
   push:
     branches:
       - main
@@ -39,7 +39,7 @@ jobs:
           json_array="[${json_array%,}]"
           # Create matrix
           echo "::set-output name=matrix::$json_array"
-          
+
   lint:
     needs: get-affected-crates
     runs-on: ubuntu-latest
@@ -52,10 +52,10 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            profile: minimal
-            toolchain: ${{ env.NIGHTLY_VERSION }}
-            override: true
-            components: rustfmt, clippy      
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_VERSION }}
+          override: true
+          components: rustfmt, clippy
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.3
       - name: Format Crates
@@ -75,9 +75,9 @@ jobs:
       - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
-            profile: minimal
-            toolchain: ${{ env.NIGHTLY_VERSION }}
-            override: true
+          profile: minimal
+          toolchain: ${{ env.NIGHTLY_VERSION }}
+          override: true
       - name: Run sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.3
       - name: Test Crates
