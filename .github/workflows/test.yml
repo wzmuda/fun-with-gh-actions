@@ -33,18 +33,23 @@ jobs:
           echo "diff_crates=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^trusted-setup/crates/' | awk -F '/' '{print $2}')" >> $GITHUB_ENV
       - name: Get affected crates
         id: create-matrix
-        if: env.diff_crates != ''
         run: |
-          crates=(${{ env.diff_crates }})
-          # Format crates array as json
-          json_array=$(printf "{\"crate\":\"%s\"}," "${crates[@]}")
-          json_array="[${json_array%,}]"
+          if [[ -n "${{ env.diff_crates }}" ]]; then
+            crates=(${{ env.diff_crates }})
+            # Format crates array as json
+            json_array=$(printf "{\"crate\":\"%s\"}," "${crates[@]}")
+            json_array="[${json_array%,}]"
+          else
+            # Provide an empty array as a default value
+            json_array="[]"
+          fi
           # Create matrix
           echo "::set-output name=matrix::$json_array"
           
   lint:
     needs: get-affected-crates
     runs-on: ubuntu-latest
+    if: ${{ fromJson(needs.get-affected-crates.outputs.matrix).length > 0 }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.get-affected-crates.outputs.matrix) }}
@@ -68,6 +73,7 @@ jobs:
   test:
     needs: get-affected-crates
     runs-on: ubuntu-latest
+    if: ${{ fromJson(needs.get-affected-crates.outputs.matrix).length > 0 }}
     strategy:
       fail-fast: false
       matrix: ${{ fromJson(needs.get-affected-crates.outputs.matrix) }}
